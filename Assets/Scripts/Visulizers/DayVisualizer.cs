@@ -5,7 +5,12 @@ using UnityEngine.UI;
 public class DayVisualizer : MonoBehaviour
 {
     [SerializeField] TMP_Text txt_quota_max, txt_quota_current,txt_day;
+
     [SerializeField] Button btn_next;
+    [SerializeField] Transform startpoint, endpoint, img_sun;
+    [SerializeField] Image slider_turn;
+    [SerializeField] GameObject panel_over;
+
     Day day;
 
 
@@ -21,7 +26,7 @@ public class DayVisualizer : MonoBehaviour
     public void Set_Day(Day _day)
     {
         day=_day;
-        txt_day.text="day "+_day.id+1;
+        txt_day.text="day "+(_day.id+1);
         txt_quota_max.text="/"+_day.quota;
         txt_quota_current.text="000";
     }
@@ -33,13 +38,24 @@ public class DayVisualizer : MonoBehaviour
 
     void Add_CurrentQuota(int value)
     {
-        txt_quota_current.text+=value.ToString();
+        txt_quota_current.text=Inventory.Innstance.coins.ToString();
 
         if(Inventory.Innstance.coins>=day.quota)btn_next.interactable=true;
         else btn_next.interactable=false;
     }
+
     public void btn_NextDay()
     {
+        panel_over.SetActive(false);
         DaySystem.i.NextDay();
+    }
+    public void SetTurnSlider(float percent)
+    {
+        img_sun.position = Vector3.Lerp(startpoint.position,endpoint.position,percent);
+        slider_turn.fillAmount=percent;
+    }
+    public void DayIsOver()
+    {
+        panel_over.SetActive(true);
     }
 }

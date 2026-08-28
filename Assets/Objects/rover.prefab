@@ -136,7 +136,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 66f7493def0d9bb4b9b04bee181e08e9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::RoverVisualizer
-  txt_weigth: {fileID: 420132201841673160}
+  txt_weight: {fileID: 420132201841673160}
   img_ico: {fileID: 6778638695526786560}
   cell_bar: {fileID: 6593327278384090620}
 --- !u!1 &2628832656969455859

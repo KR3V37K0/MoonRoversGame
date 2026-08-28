@@ -23,10 +23,16 @@ public class OrdersGenerator : MonoBehaviour,IBootable
             return;
         }
     }
-    void Generate()
+    public void Generate()
     {
+        if (bases == null || bases.Count < 2)
+        {
+            Debug.LogWarning("Need more Bases");
+            return;
+        }
+
         List<Order> orders = new List<Order>();
-        for (int i = 0; i < DaySystem.i.currendDay.OrderPerDay; i++)
+        for (int i = 0; i < DaySystem.i.currentDay.OrderPerDay; i++)
         {
             orders.Add(GenerateRandomOrder());
         }

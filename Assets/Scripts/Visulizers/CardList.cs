@@ -5,10 +5,11 @@ public class CardList : MonoBehaviour
 {
     [SerializeField]GameObject prefab;
     List<CardVisualizer>cards=new List<CardVisualizer>();
-    public void AddCard(Card _card)
+   public void AddCard(Card _card)
     {
-        cards.Add(Instantiate(prefab).GetComponent<CardVisualizer>()); 
-        cards[cards.Count-1].SetInfo(_card);
+        GameObject obj = Instantiate(prefab, transform);
+        cards.Add(obj.GetComponent<CardVisualizer>());
+        cards[cards.Count - 1].SetInfo(_card);
     }
     public void DeleteCard(Card _card)
     {

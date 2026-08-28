@@ -62,7 +62,7 @@ public class OrderVisualizer : MonoBehaviour
 
             case OrderState.InDelivery:
                 backgroundImage.color = inDeliveryColor;
-                button.interactable = false;
+                //button.interactable = false;
                 isInDelivery = true;
                 break;
 

@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Text.RegularExpressions;
 using UnityEngine;
 using UnityEngine.Tilemaps;
 
@@ -10,7 +11,7 @@ public class RoverController : MonoBehaviour
 
     [Header("State")]
     public Rover roverData;
-    public int currentEnergy{get;private set;}
+    public int currentEnergy;
     public Vector2Int currentHex;
     public List<Vector2Int> route = new List<Vector2Int>();
     public int currentStepIndex = 0; // ← добавляем индекс текущего шага
@@ -22,7 +23,20 @@ public class RoverController : MonoBehaviour
     public System.Action<RoverController> OnRouteBuilt;
     public System.Action<RoverController> OnMovementComplete;
     public System.Action<RoverController> OnStepCompleted;
+    public System.Action<RoverController> OnStatsChanged;
 
+    void OnEnable()
+    {
+        DaySystem.OnNextDay+=OnNewDay;
+    }
+    void OnDisable()
+    {
+        DaySystem.OnNextDay-=OnNewDay;
+    }
+    private void OnNewDay(int day)
+    {
+        RemoveAddedWeight();
+    }
     public void Init(Rover data, Vector2Int startHex, Grid gridReference, Tilemap overlay)
     {
         routeOverlay = overlay;
@@ -61,7 +75,7 @@ public class RoverController : MonoBehaviour
         UpdateRouteVisuals();
         HighlightAvailableNeighbors();
 
-        Debug.Log($"Начато построение маршрута для ровера {roverData.id}. Текущий гекс: {currentHex}");
+        //Debug.Log($"Начато построение маршрута для ровера {roverData.id}. Текущий гекс: {currentHex}");
     }
     
 
@@ -125,7 +139,7 @@ public class RoverController : MonoBehaviour
         routeOverlay?.ClearAllTiles();
         OnRouteBuilt?.Invoke(this);
 
-        Debug.Log($"Маршрут завершён. Длина: {route.Count} гексов.");
+        //Debug.Log($"Маршрут завершён. Длина: {route.Count} гексов.");
     }
 
     private void UpdateRouteVisuals()
@@ -194,53 +208,76 @@ public class RoverController : MonoBehaviour
         Vector3Int cellPos = new Vector3Int(hex.x, hex.y, 0);
         return grid.CellToWorld(cellPos);
     }
+    
+    public void AddEnergy(int amount)
+    {
+        currentEnergy = Mathf.Clamp(currentEnergy + amount, 0, roverData.energy);
+        OnStatsChanged?.Invoke(this);
+        RoverManager.Instance?.OnRoverEnergyChanged?.Invoke(this);
+    }
 
-    // === STATIC HELPER ДЛЯ ГЕКСОВ ===
+    private int addedWeight = 0;
+
+    public void AddWeight(int amount)
+    {
+        addedWeight += amount;
+        roverData.max_weight += amount;
+        OnStatsChanged?.Invoke(this);
+    }
+
+    public void RemoveAddedWeight()
+    {
+        roverData.max_weight -= addedWeight;
+        addedWeight = 0;
+        OnStatsChanged?.Invoke(this);
+    }
+    
 
 
 }
-    public static class HexHelper
+// === STATIC HELPER ДЛЯ ГЕКСОВ ===
+public static class HexHelper
+{
+    // Соседи для чётной строки (y % 2 == 0)
+    private static Vector2Int[] evenNeighbors = new Vector2Int[]
     {
-        // Соседи для чётной строки (y % 2 == 0)
-        private static Vector2Int[] evenNeighbors = new Vector2Int[]
-        {
-            new Vector2Int(1, 0),   // право
-            new Vector2Int(0, 1),   // верх-право
-            new Vector2Int(-1, 1),  // верх-лево
-            new Vector2Int(-1, 0),  // лево
-            new Vector2Int(-1, -1), // низ-лево
-            new Vector2Int(0, -1)   // низ-право
-        };
+        new Vector2Int(1, 0),   // право
+        new Vector2Int(0, 1),   // верх-право
+        new Vector2Int(-1, 1),  // верх-лево
+        new Vector2Int(-1, 0),  // лево
+        new Vector2Int(-1, -1), // низ-лево
+        new Vector2Int(0, -1)   // низ-право
+    };
 
-        // Соседи для нечётной строки (y % 2 == 1)
-        private static Vector2Int[] oddNeighbors = new Vector2Int[]
-        {
-            new Vector2Int(1, 0),   // право
-            new Vector2Int(1, 1),   // верх-право
-            new Vector2Int(0, 1),   // верх-лево
-            new Vector2Int(-1, 0),  // лево
-            new Vector2Int(0, -1),  // низ-лево
-            new Vector2Int(1, -1)   // низ-право
-        };
+    // Соседи для нечётной строки (y % 2 == 1)
+    private static Vector2Int[] oddNeighbors = new Vector2Int[]
+    {
+        new Vector2Int(1, 0),   // право
+        new Vector2Int(1, 1),   // верх-право
+        new Vector2Int(0, 1),   // верх-лево
+        new Vector2Int(-1, 0),  // лево
+        new Vector2Int(0, -1),  // низ-лево
+        new Vector2Int(1, -1)   // низ-право
+    };
 
-        public static bool AreNeighbors(Vector2Int a, Vector2Int b)
-        {
-            var neighbors = GetNeighbors(a);
-            return neighbors.Contains(b);
-        }
-
-        public static List<Vector2Int> GetNeighbors(Vector2Int hex)
-        {
-            var result = new List<Vector2Int>();
-
-            // Выбираем массив соседей в зависимости от чётности строки
-            Vector2Int[] neighbors = hex.y % 2 == 0 ? evenNeighbors : oddNeighbors;
-
-            foreach (var offset in neighbors)
-            {
-                result.Add(hex + offset);
-            }
-
-            return result;
-        }
+    public static bool AreNeighbors(Vector2Int a, Vector2Int b)
+    {
+        var neighbors = GetNeighbors(a);
+        return neighbors.Contains(b);
     }
+
+    public static List<Vector2Int> GetNeighbors(Vector2Int hex)
+    {
+        var result = new List<Vector2Int>();
+
+        // Выбираем массив соседей в зависимости от чётности строки
+        Vector2Int[] neighbors = hex.y % 2 == 0 ? evenNeighbors : oddNeighbors;
+
+        foreach (var offset in neighbors)
+        {
+            result.Add(hex + offset);
+        }
+
+        return result;
+    }
+}

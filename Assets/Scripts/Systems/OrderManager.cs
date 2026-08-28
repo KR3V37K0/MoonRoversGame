@@ -39,6 +39,7 @@ public class OrderManager : MonoBehaviour, IBootable
         if (selectedRover != null && CanTakeOrder(selectedRover, order))
         {
             TakeOrder(selectedRover, order);
+            baseHighlighter.HighlightRoute(order.from, order.to);
             return;
         }
 
@@ -112,6 +113,7 @@ public class OrderManager : MonoBehaviour, IBootable
 
     private void CompleteDelivery(RoverController rover, Order order)
     {
+Debug.Log($"order {order.name} delivered {rover.roverData.ico}");
         activeDeliveries.Remove(rover.roverData.id);
 
         orderList.RemoveOrder(order);
