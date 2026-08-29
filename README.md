@@ -15,8 +15,8 @@
 
 
 ## Геймплей
+https://youtu.be/G7nj1-sdoYA
 
-[![Gameplay]()](https://youtu.be/G7nj1-sdoYA)
 
 
 
