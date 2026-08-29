@@ -54,7 +54,6 @@ public class Inventory : MonoBehaviour
     }
     void GiveCards(Order _order)
     {
-        Debug.Log(_order.reward_cards);
         if(_order.reward_cards==0)return;
 
         for(int i = 0; i<_order.reward_cards; i++)

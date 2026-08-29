@@ -8,13 +8,14 @@ public class RoverController : MonoBehaviour
     [Header("References")]
     [SerializeField] private LineRenderer lineRenderer;
     [SerializeField] private Tile availableTile;
+    [SerializeField] private Tilemap terrainTilemap;
 
     [Header("State")]
     public Rover roverData;
     public int currentEnergy;
     public Vector2Int currentHex;
     public List<Vector2Int> route = new List<Vector2Int>();
-    public int currentStepIndex = 0; // ← добавляем индекс текущего шага
+    public int currentStepIndex = 0; 
     public bool isMoving = false;
     public bool isRouteBuilding = false;
     private Tilemap routeOverlay;
@@ -37,7 +38,7 @@ public class RoverController : MonoBehaviour
     {
         RemoveAddedWeight();
     }
-    public void Init(Rover data, Vector2Int startHex, Grid gridReference, Tilemap overlay)
+    public void Init(Rover data, Vector2Int startHex, Grid gridReference, Tilemap overlay, Tilemap terrain)
     {
         routeOverlay = overlay;
         roverData = data;
@@ -48,6 +49,7 @@ public class RoverController : MonoBehaviour
         currentStepIndex = 0;
         SetImage();
         currentEnergy=roverData.energy;
+        terrainTilemap = terrain;
     }
 
     void SetImage()
@@ -87,7 +89,7 @@ public class RoverController : MonoBehaviour
 
         if (!HexHelper.AreNeighbors(lastHex, newHex))
         {
-            Debug.Log("Можно кликать только по соседним гексам!");
+           // Debug.Log("Можно кликать только по соседним гексам!");
             return;
         }
 
@@ -158,8 +160,13 @@ public class RoverController : MonoBehaviour
     {
         if (isMoving || route.Count < 2) return;
 
-        if (currentEnergy <= 0)
+        // Проверяем стоимость следующего гекса
+        Vector2Int targetHex = route[1];
+        int hexCost = GetHexCost(targetHex);
+        
+        if (currentEnergy < hexCost)
         {
+            Debug.Log($"Не хватает энергии для прохода через этот гекс! Нужно {hexCost}, есть {currentEnergy}");
             FinishRoute();
             CancelRoute();
             return;
@@ -167,7 +174,6 @@ public class RoverController : MonoBehaviour
 
         isMoving = true;
 
-        Vector2Int targetHex = route[1];
         Vector3 targetWorld = HexToWorld(targetHex);
 
         float t = 0;
@@ -182,9 +188,9 @@ public class RoverController : MonoBehaviour
         transform.position = targetWorld;
         currentHex = targetHex;
 
-        route.RemoveAt(0); // ← удаляем пройденный гекс
+        route.RemoveAt(0);
 
-        currentEnergy--;
+        currentEnergy -= hexCost; // <-- тратим энергию в зависимости от типа местности
         RoverManager.Instance?.OnRoverEnergyChanged.Invoke(this);
 
         UpdateRouteVisuals();
@@ -202,7 +208,20 @@ public class RoverController : MonoBehaviour
         OnStepCompleted?.Invoke(this);
     }
     // === ХЕЛПЕРЫ ===
-
+    private int GetHexCost(Vector2Int hex)
+    {
+        if (terrainTilemap == null) return 1;
+        
+        Vector3Int cellPos = new Vector3Int(hex.x, hex.y, 0);
+        TileBase tile = terrainTilemap.GetTile(cellPos);
+        
+        if (tile is TerrainTile terrainTile)
+        {
+            return terrainTile.energyCost;
+        }
+        
+        return 1;
+    }
     private Vector3 HexToWorld(Vector2Int hex)
     {
         Vector3Int cellPos = new Vector3Int(hex.x, hex.y, 0);

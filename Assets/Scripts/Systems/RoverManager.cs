@@ -13,6 +13,7 @@ public class RoverManager : MonoBehaviour, IBootable
     [SerializeField] private Tilemap overlayHexTilemap;
     [SerializeField] private Camera mainCamera;
     [SerializeField]GameObject panel_tips;
+    [SerializeField] private Tilemap terrainTilemap; 
 
     private Dictionary<int, RoverController> roverMap = new Dictionary<int, RoverController>();
     private List<RoverController> roverControllers = new List<RoverController>();
@@ -38,7 +39,7 @@ public class RoverManager : MonoBehaviour, IBootable
 
             GameObject roverObj = Instantiate(roverPrefab, roverParent);
             var controller = roverObj.GetComponent<RoverController>();
-            controller.Init(roverData, startHex, grid, overlayHexTilemap);
+            controller.Init(roverData, startHex, grid, overlayHexTilemap,terrainTilemap);
             controller.OnRouteBuilt += OnRouteBuilt;
             controller.OnMovementComplete += OnMovementComplete;
 

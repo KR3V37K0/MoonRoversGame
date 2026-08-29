@@ -1,6 +1,7 @@
 using UnityEngine;
 using TMPro;
 using UnityEngine.UI;
+using System.Threading.Tasks;
 
 public class RoverVisualizer : MonoBehaviour
 {
@@ -16,11 +17,14 @@ public class RoverVisualizer : MonoBehaviour
         rover = _rover;
         GetComponent<Button>().onClick.AddListener(() => RoverManager.Instance.SelectRover(rover));
 
-        // Находим контроллер для этого ровера
         roverController = RoverManager.Instance?.GetRoverById(rover.id);
         if (roverController != null)
         {
             roverController.OnStatsChanged += OnStatsChanged;
+        }
+        else
+        {
+            Debug.LogWarning($"roverController для ровера {rover.id} не найден!");
         }
 
         Visualize();
@@ -42,11 +46,12 @@ public class RoverVisualizer : MonoBehaviour
         cell_bar.ChangeCells(controller.currentEnergy);
     }
 
-    private void OnStatsChanged(RoverController controller)
+    private async void OnStatsChanged(RoverController controller)
     {
+        await Task.Delay(100);
         if (controller.roverData.id != rover.id) return;
         // Обновляем вес
-        txt_weight.text = rover.max_weight.ToString() + " kg";
+        txt_weight.text = controller.roverData.max_weight.ToString() + " kg";
         // Обновляем энергию (если изменилась)
         cell_bar.ChangeCells(controller.currentEnergy);
     }

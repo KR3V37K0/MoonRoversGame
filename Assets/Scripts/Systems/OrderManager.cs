@@ -12,15 +12,20 @@ public class OrderManager : MonoBehaviour, IBootable
 
     public void Boot()
     {
-        foreach (var visualizer in orderList.GetComponentsInChildren<OrderVisualizer>())
-        {
-            visualizer.OnOrderSelected += OnOrderClicked;
-        }
-
         roverManager.OnRoverMoved += OnRoverMoved;
         roverManager.OnRoverSelected += OnRoverSelected;
         roverManager.OnRoverDeselected += OnRoverDeselected;
+        DaySystem.OnNextDay+=ClearOrderSelection;
 
+        RefreshOrderSubscriptions();
+    }
+    public void RefreshOrderSubscriptions()
+    {
+        foreach (var visualizer in orderList.GetComponentsInChildren<OrderVisualizer>())
+        {
+            visualizer.OnOrderSelected -= OnOrderClicked;
+            visualizer.OnOrderSelected += OnOrderClicked;
+        }
         UpdateOrderVisuals();
     }
 
@@ -54,7 +59,12 @@ public class OrderManager : MonoBehaviour, IBootable
         selectedOrder = order;
         baseHighlighter.HighlightRoute(order.from, order.to); // <-- это должно работать
     }
-
+    public void ClearAllDeliveries()
+    {
+        activeDeliveries.Clear();
+        // Также нужно вернуть заказы в список, если они не были доставлены
+        // Или просто очистить их — зависит от дизайна
+    }
     private bool CanTakeOrder(RoverController rover, Order order)
     {
         if (rover == null) return false;
@@ -113,7 +123,7 @@ public class OrderManager : MonoBehaviour, IBootable
 
     private void CompleteDelivery(RoverController rover, Order order)
     {
-Debug.Log($"order {order.name} delivered {rover.roverData.ico}");
+//Debug.Log($"order {order.name} delivered {rover.roverData.ico}");
         activeDeliveries.Remove(rover.roverData.id);
 
         orderList.RemoveOrder(order);
@@ -160,10 +170,11 @@ Debug.Log($"order {order.name} delivered {rover.roverData.ico}");
     }
 
     // Метод для явного сброса выделения заказа (например, при старте нового дня)
-    public void ClearOrderSelection()
+    public void ClearOrderSelection(int i)
     {
         DeselectOrder();
         UpdateOrderVisuals();
+        RefreshOrderSubscriptions();
     }
 
     private void OnDestroy()
@@ -175,5 +186,6 @@ Debug.Log($"order {order.name} delivered {rover.roverData.ico}");
         roverManager.OnRoverMoved -= OnRoverMoved;
         roverManager.OnRoverSelected -= OnRoverSelected;
         roverManager.OnRoverDeselected -= OnRoverDeselected;
+        DaySystem.OnNextDay-=ClearOrderSelection;
     }
 }
